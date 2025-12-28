@@ -1,0 +1,385 @@
+/**
+ * 🤖 OpenAI Connector - موصل OpenAI
+ * يتصل بـ OpenAI API للذكاء الاصطناعي
+ */
+
+// ═══════════════════════════════════════════════════════════════
+// الأنواع
+// ═══════════════════════════════════════════════════════════════
+
+export interface OpenAIConfig {
+    apiKey: string;
+    model?: string;          // gpt-4.1-mini, gpt-4.1-nano, gemini-2.5-flash
+    baseUrl?: string;        // للـ API المتوافق
+    maxTokens?: number;
+    temperature?: number;
+}
+
+export interface ChatMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+}
+
+export interface ChatResponse {
+    success: boolean;
+    content?: string;
+    error?: string;
+    tokensUsed?: number;
+    model?: string;
+}
+
+export interface AnalysisResult {
+    success: boolean;
+    analysis?: string;
+    summary?: string;
+    keyPoints?: string[];
+    error?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OpenAI Connector Class
+// ═══════════════════════════════════════════════════════════════
+
+export class OpenAIConnector {
+    private config: OpenAIConfig;
+    private chatHistory: ChatMessage[] = [];
+
+    constructor(config: OpenAIConfig) {
+        this.config = {
+            model: 'gpt-4.1-mini',
+            maxTokens: 4096,
+            temperature: 0.7,
+            ...config
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // المحادثة
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * إرسال رسالة واحدة
+     */
+    async chat(message: string, systemPrompt?: string): Promise<ChatResponse> {
+        try {
+            const messages: ChatMessage[] = [];
+            
+            if (systemPrompt) {
+                messages.push({ role: 'system', content: systemPrompt });
+            }
+            
+            messages.push({ role: 'user', content: message });
+
+            const response = await fetch(this.config.baseUrl || 'https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: this.config.model,
+                    messages,
+                    max_tokens: this.config.maxTokens,
+                    temperature: this.config.temperature
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`API Error: ${response.status} - ${error}`);
+            }
+
+            const data = await response.json() as any;
+            const content = data.choices?.[0]?.message?.content || '';
+
+            return {
+                success: true,
+                content,
+                model: this.config.model,
+                tokensUsed: data.usage?.total_tokens
+            };
+        } catch (error: any) {
+            console.error('❌ OpenAI chat error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * محادثة متعددة الرسائل
+     */
+    async chatWithHistory(messages: ChatMessage[], systemPrompt?: string): Promise<ChatResponse> {
+        try {
+            const allMessages: ChatMessage[] = [];
+            
+            if (systemPrompt) {
+                allMessages.push({ role: 'system', content: systemPrompt });
+            }
+            
+            allMessages.push(...messages);
+
+            const response = await fetch(this.config.baseUrl || 'https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: this.config.model,
+                    messages: allMessages,
+                    max_tokens: this.config.maxTokens,
+                    temperature: this.config.temperature
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`API Error: ${response.status} - ${error}`);
+            }
+
+            const data = await response.json() as any;
+            const content = data.choices?.[0]?.message?.content || '';
+
+            return {
+                success: true,
+                content,
+                model: this.config.model,
+                tokensUsed: data.usage?.total_tokens
+            };
+        } catch (error: any) {
+            console.error('❌ OpenAI chat with history error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * بدء محادثة جديدة
+     */
+    startNewChat(): void {
+        this.chatHistory = [];
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // التحليل
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * تحليل نص
+     */
+    async analyzeText(text: string, instructions?: string): Promise<AnalysisResult> {
+        try {
+            const prompt = `
+${instructions || 'حلل النص التالي وقدم ملخصاً والنقاط الرئيسية:'}
+
+النص:
+---
+${text}
+---
+
+قدم التحليل بالصيغة التالية:
+## الملخص
+[ملخص موجز]
+
+## النقاط الرئيسية
+- نقطة 1
+- نقطة 2
+- نقطة 3
+
+## التحليل التفصيلي
+[التحليل]
+`;
+
+            const response = await this.chat(prompt);
+            
+            if (!response.success || !response.content) {
+                return {
+                    success: false,
+                    error: response.error || 'فشل التحليل'
+                };
+            }
+
+            // استخراج الأقسام
+            const summaryMatch = response.content.match(/## الملخص\n([\s\S]*?)(?=##|$)/);
+            const pointsMatch = response.content.match(/## النقاط الرئيسية\n([\s\S]*?)(?=##|$)/);
+
+            const keyPoints = pointsMatch
+                ? pointsMatch[1].split('\n').filter(line => line.trim().startsWith('-')).map(line => line.trim().substring(1).trim())
+                : [];
+
+            return {
+                success: true,
+                analysis: response.content,
+                summary: summaryMatch ? summaryMatch[1].trim() : undefined,
+                keyPoints
+            };
+        } catch (error: any) {
+            console.error('❌ OpenAI analyze error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * تحليل مهمة وتحديد الأداة المناسبة
+     */
+    async analyzeTask(task: string): Promise<{
+        needsExecution: boolean;
+        needsCoding: boolean;
+        needsAnalysis: boolean;
+        needsResearch: boolean;
+        suggestedTool: 'manus' | 'cursor' | 'google';
+        reasoning: string;
+    }> {
+        try {
+            const prompt = `
+أنت محلل مهام ذكي. حلل المهمة التالية وحدد نوعها والأداة المناسبة لها.
+
+المهمة: "${task}"
+
+الأدوات المتاحة:
+1. **manus** - للتنفيذ على الجهاز (أوامر shell، إدارة ملفات، git، تشغيل برامج)
+2. **cursor** - للبرمجة وتعديل الكود (إنشاء مشاريع، كتابة كود، تعديل ملفات برمجية)
+3. **google** - للتحليل والبحث والمحادثة (أسئلة، تحليل، بحث، شرح)
+
+أجب بصيغة JSON فقط:
+{
+    "needsExecution": true/false,
+    "needsCoding": true/false,
+    "needsAnalysis": true/false,
+    "needsResearch": true/false,
+    "suggestedTool": "manus" أو "cursor" أو "google",
+    "reasoning": "السبب"
+}
+`;
+
+            const response = await this.chat(prompt);
+            
+            if (!response.success || !response.content) {
+                throw new Error(response.error || 'فشل تحليل المهمة');
+            }
+
+            // استخراج JSON
+            const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+            }
+
+            // افتراضي
+            return {
+                needsExecution: false,
+                needsCoding: false,
+                needsAnalysis: true,
+                needsResearch: false,
+                suggestedTool: 'google',
+                reasoning: 'لم يتم تحديد نوع المهمة بوضوح'
+            };
+        } catch (error: any) {
+            console.error('❌ OpenAI task analysis error:', error);
+            return {
+                needsExecution: false,
+                needsCoding: false,
+                needsAnalysis: true,
+                needsResearch: false,
+                suggestedTool: 'google',
+                reasoning: error.message
+            };
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // توليد المحتوى
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * توليد كود
+     */
+    async generateCode(description: string, language: string): Promise<ChatResponse> {
+        const prompt = `
+أنت مبرمج خبير. اكتب كود ${language} للمهمة التالية:
+
+${description}
+
+قواعد:
+- اكتب كود نظيف وقابل للقراءة
+- أضف تعليقات توضيحية
+- اتبع أفضل الممارسات
+- الكود يجب أن يكون جاهزاً للتشغيل
+
+أعد الكود فقط بدون شرح إضافي، داخل block كود:
+\`\`\`${language}
+// الكود هنا
+\`\`\`
+`;
+
+        return this.chat(prompt);
+    }
+
+    /**
+     * تلخيص نص
+     */
+    async summarize(text: string, maxLength?: number): Promise<ChatResponse> {
+        const prompt = `
+لخص النص التالي ${maxLength ? `في حدود ${maxLength} كلمة` : 'بشكل موجز'}:
+
+${text}
+`;
+
+        return this.chat(prompt);
+    }
+
+    /**
+     * ترجمة نص
+     */
+    async translate(text: string, targetLanguage: string): Promise<ChatResponse> {
+        const prompt = `ترجم النص التالي إلى ${targetLanguage}:\n\n${text}`;
+        return this.chat(prompt);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // الإعدادات
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * تغيير النموذج
+     */
+    setModel(modelName: string): void {
+        this.config.model = modelName;
+    }
+
+    /**
+     * تغيير درجة الحرارة
+     */
+    setTemperature(temperature: number): void {
+        this.config.temperature = temperature;
+    }
+
+    /**
+     * معلومات الموصل
+     */
+    getInfo(): { name: string; model: string; temperature: number } {
+        return {
+            name: 'OpenAI',
+            model: this.config.model!,
+            temperature: this.config.temperature!
+        };
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Factory Function
+// ═══════════════════════════════════════════════════════════════
+
+export function createOpenAIConnector(apiKey: string, model?: string, baseUrl?: string): OpenAIConnector {
+    return new OpenAIConnector({
+        apiKey,
+        model: model || 'gpt-4.1-mini',
+        baseUrl
+    });
+}
