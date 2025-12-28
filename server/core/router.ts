@@ -87,6 +87,7 @@ const CURSOR_KEYWORDS = [
 const ANTIGRAVITY_KEYWORDS = [
     // Antigravity
     'antigravity', 'أنتيجرافيتي', 'انتيجرافيتي',
+    'أنتي', 'انتي',
     // IDE
     'ide', 'بيئة تطوير'
 ];
@@ -185,7 +186,7 @@ export class TaskRouter {
 
         for (const keyword of ANTIGRAVITY_KEYWORDS) {
             if (taskLower.includes(keyword.toLowerCase())) {
-                antigravityScore += 1;
+                antigravityScore += 2; // أولوية أعلى
             }
         }
 
