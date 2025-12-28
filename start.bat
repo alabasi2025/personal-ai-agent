@@ -23,9 +23,22 @@ if not exist "dist" (
 :: Create data directory
 if not exist "data" mkdir data
 
-:: Start the server
+:: Start MCP Server in background
 echo.
-echo 🚀 Starting Personal AI Agent...
+echo 🖥️ Starting MCP Server on port 3000...
+start "MCP Server" /min cmd /c "node mcp-server.js"
+
+:: Wait for MCP Server to start
+timeout /t 2 /nobreak > nul
+
+:: Start the main server
+echo.
+echo 🚀 Starting Personal AI Agent on port 4000...
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo   📍 Web Interface: http://localhost:4000
+echo   📍 MCP Server:    http://localhost:3000
+echo ═══════════════════════════════════════════════════════════════
 echo.
 node dist/server/api.js
 
