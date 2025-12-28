@@ -39,7 +39,7 @@ export class AntigravityConnector {
                 `if exist "${this.config.antigravityPath}" (echo exists) else (echo not found)`
             );
             
-            this.isConnected = result.success && result.output?.includes('exists');
+            this.isConnected = result.success && (result.output?.includes('exists') || false);
             return this.isConnected;
         } catch (error) {
             console.error('❌ Failed to connect to Antigravity:', error);
