@@ -87,6 +87,7 @@ export class PersonalAgent {
             manus: this.manus,
             google: this.google,
             cursor: this.cursor,
+            antigravity: this.antigravity,
             memory: this.memory
         });
     }

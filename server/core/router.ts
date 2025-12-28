@@ -6,13 +6,14 @@
 import { ManusConnector } from '../connectors/manus.js';
 import { GoogleAIConnector } from '../connectors/google.js';
 import { CursorConnector } from '../connectors/cursor.js';
+import { AntigravityConnector } from '../connectors/antigravity.js';
 import { MemoryStore } from '../memory/store.js';
 
 // ═══════════════════════════════════════════════════════════════
 // الأنواع
 // ═══════════════════════════════════════════════════════════════
 
-export type ToolType = 'manus' | 'cursor' | 'google' | 'auto';
+export type ToolType = 'manus' | 'cursor' | 'antigravity' | 'google' | 'auto';
 
 export interface TaskAnalysis {
     originalTask: string;
@@ -44,6 +45,7 @@ export interface RouterConfig {
     manus: ManusConnector;
     google: GoogleAIConnector;
     cursor: CursorConnector;
+    antigravity: AntigravityConnector;
     memory: MemoryStore;
 }
 
@@ -77,8 +79,18 @@ const CURSOR_KEYWORDS = [
     'refactor', 'أعد كتابة', 'حسن',
     // لغات
     'javascript', 'typescript', 'python', 'react', 'node',
-    'html', 'css', 'api', 'database', 'قاعدة بيانات'
+    'html', 'css', 'api', 'database', 'قاعدة بيانات',
+    // Cursor
+    'cursor', 'كيرسور'
 ];
+
+const ANTIGRAVITY_KEYWORDS = [
+    // Antigravity
+    'antigravity', 'أنتيجرافيتي', 'انتيجرافيتي',
+    // IDE
+    'ide', 'بيئة تطوير'
+];
+
 
 const GOOGLE_KEYWORDS = [
     // تحليل
@@ -103,12 +115,14 @@ export class TaskRouter {
     private manus: ManusConnector;
     private google: GoogleAIConnector;
     private cursor: CursorConnector;
+    private antigravity: AntigravityConnector;
     private memory: MemoryStore;
 
     constructor(config: RouterConfig) {
         this.manus = config.manus;
         this.google = config.google;
         this.cursor = config.cursor;
+        this.antigravity = config.antigravity;
         this.memory = config.memory;
     }
 
@@ -154,6 +168,7 @@ export class TaskRouter {
         // حساب النقاط لكل أداة
         let manusScore = 0;
         let cursorScore = 0;
+        let antigravityScore = 0;
         let googleScore = 0;
 
         for (const keyword of MANUS_KEYWORDS) {
@@ -168,6 +183,12 @@ export class TaskRouter {
             }
         }
 
+        for (const keyword of ANTIGRAVITY_KEYWORDS) {
+            if (taskLower.includes(keyword.toLowerCase())) {
+                antigravityScore += 1;
+            }
+        }
+
         for (const keyword of GOOGLE_KEYWORDS) {
             if (taskLower.includes(keyword.toLowerCase())) {
                 googleScore += 1;
@@ -175,8 +196,8 @@ export class TaskRouter {
         }
 
         // تحديد الأداة
-        const maxScore = Math.max(manusScore, cursorScore, googleScore);
-        const totalScore = manusScore + cursorScore + googleScore;
+        const maxScore = Math.max(manusScore, cursorScore, antigravityScore, googleScore);
+        const totalScore = manusScore + cursorScore + antigravityScore + googleScore;
 
         let suggestedTool: ToolType = 'google';
         let taskType: TaskAnalysis['taskType'] = 'conversation';
@@ -186,6 +207,9 @@ export class TaskRouter {
             taskType = 'execution';
         } else if (maxScore === cursorScore && cursorScore > 0) {
             suggestedTool = 'cursor';
+            taskType = 'coding';
+        } else if (maxScore === antigravityScore && antigravityScore > 0) {
+            suggestedTool = 'antigravity';
             taskType = 'coding';
         } else if (maxScore === googleScore && googleScore > 0) {
             suggestedTool = 'google';
@@ -243,6 +267,10 @@ export class TaskRouter {
 
                 case 'cursor':
                     result = await this.executeWithCursor(task, analysis);
+                    break;
+
+                case 'antigravity':
+                    result = await this.executeWithAntigravity(task, analysis);
                     break;
 
                 case 'google':
@@ -348,6 +376,39 @@ export class TaskRouter {
     }
 
     /**
+     * تنفيذ مع Antigravity
+     */
+    private async executeWithAntigravity(task: string, analysis: TaskAnalysis): Promise<any> {
+        // تحديد نوع مهمة البرمجة
+        if (task.includes('مشروع') || task.includes('project') || task.includes('أنشئ')) {
+            // إنشاء مشروع
+            const projectPath = await this.extractPath(task) || 'D:\\Projects\\new-project';
+            const result = await this.antigravity.open(projectPath);
+            return { type: 'project', path: projectPath, success: result };
+        }
+
+        if (task.includes('افتح') || task.includes('open')) {
+            // فتح ملف أو مجلد
+            const path = await this.extractPath(task);
+            if (path) {
+                const result = await this.antigravity.openFile(path);
+                return { type: 'open', path, success: result };
+            } else {
+                // فتح Antigravity بدون مسار
+                const result = await this.antigravity.open();
+                return { type: 'open', success: result };
+            }
+        }
+
+        // فتح Antigravity بشكل عام
+        const result = await this.antigravity.open();
+        return {
+            type: 'open',
+            success: result
+        };
+    }
+
+    /**
      * تنفيذ مع Google
      */
     private async executeWithGoogle(task: string, analysis: TaskAnalysis): Promise<any> {
@@ -366,13 +427,21 @@ ${contextPrompt}
 أجب على طلب المستخدم بشكل مفيد ومختصر.
 `;
 
-        const response = await this.google.chat(task, systemPrompt);
-
-        return {
-            type: 'conversation',
-            response: response.content,
-            success: response.success
-        };
+        try {
+            const response = await this.google.chat(task, systemPrompt);
+            return {
+                type: 'conversation',
+                response: response.content,
+                success: response.success
+            };
+        } catch (error) {
+            // Google AI غير متاح، ارجع رسالة بسيطة
+            return {
+                type: 'conversation',
+                response: 'لا يوجد رد - Google AI غير مربوط. اربط OpenAI أو Google AI من صفحة الإعدادات.',
+                success: false
+            };
+        }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -436,6 +505,7 @@ ${contextPrompt}
         return {
             manus: this.manus.getInfo(),
             cursor: this.cursor.getInfo(),
+            antigravity: this.antigravity.getConnectionStatus(),
             google: this.google.getInfo()
         };
     }
