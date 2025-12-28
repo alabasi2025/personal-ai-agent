@@ -8,6 +8,7 @@ import { MemoryStore } from '../memory/store.js';
 import { ManusConnector, createManusConnector } from '../connectors/manus.js';
 import { GoogleAIConnector, createGoogleAIConnector } from '../connectors/google.js';
 import { CursorConnector, createCursorConnector } from '../connectors/cursor.js';
+import { AntigravityConnector, createAntigravityConnector } from '../connectors/antigravity.js';
 import { TaskRouter, createTaskRouter, ToolType, TaskResult } from './router.js';
 
 // ═══════════════════════════════════════════════════════════════
@@ -28,6 +29,9 @@ export interface AgentConfig {
 
     // Cursor
     cursorPath?: string;
+
+    // Antigravity
+    antigravityPath?: string;
 
     // إعدادات عامة
     userName?: string;
@@ -62,6 +66,7 @@ export class PersonalAgent {
     private manus: ManusConnector;
     private google: GoogleAIConnector;
     private cursor: CursorConnector;
+    private antigravity: AntigravityConnector;
     private router: TaskRouter;
     private currentConversationId: string | null = null;
     private isInitialized: boolean = false;
@@ -76,6 +81,7 @@ export class PersonalAgent {
         this.manus = createManusConnector(config.manusServerUrl, config.manusApiKey);
         this.google = createGoogleAIConnector(config.googleApiKey, config.googleModel);
         this.cursor = createCursorConnector(this.manus, config.cursorPath);
+        this.antigravity = createAntigravityConnector(this.manus, config.antigravityPath);
 
         this.router = createTaskRouter({
             manus: this.manus,
@@ -116,6 +122,14 @@ export class PersonalAgent {
                 console.log('✅ متصل بـ Manus MCP');
             } else {
                 console.log('⚠️ لم يتم الاتصال بـ Manus MCP');
+            }
+
+            // الاتصال بـ Antigravity
+            if (this.config.antigravityPath) {
+                const antigravityConnected = await this.antigravity.connect();
+                if (antigravityConnected) {
+                    console.log('✅ متصل بـ Antigravity');
+                }
             }
 
             // بدء محادثة جديدة
