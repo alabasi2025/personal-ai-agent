@@ -3,6 +3,7 @@
  * واجهة HTTP للوكيل الشخصي
  */
 
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { PersonalAgent, createPersonalAgent, AgentConfig } from './core/agent.js';
