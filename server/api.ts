@@ -7,6 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { PersonalAgent, createPersonalAgent, AgentConfig } from './core/agent.js';
 import { ToolType } from './core/router.js';
+import { getSettingsManager, Settings } from './settings.js';
 
 // ═══════════════════════════════════════════════════════════════
 // إعداد Express
@@ -287,6 +288,111 @@ app.post('/api/execute/:tool', async (req: Request, res: Response) => {
         });
 
         res.json(response);
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Settings API
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * الحصول على الإعدادات
+ */
+app.get('/api/settings', (req: Request, res: Response) => {
+    const settings = getSettingsManager();
+    res.json({
+        success: true,
+        settings: settings.getSafeSettings()
+    });
+});
+
+/**
+ * حفظ الإعدادات
+ */
+app.post('/api/settings', async (req: Request, res: Response) => {
+    try {
+        const settings = getSettingsManager();
+        const newSettings: Partial<Settings> = req.body;
+
+        // حفظ الإعدادات
+        const saved = settings.saveSettings(newSettings);
+
+        if (!saved) {
+            return res.status(500).json({
+                success: false,
+                error: 'فشل حفظ الإعدادات'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'تم حفظ الإعدادات بنجاح',
+            settings: settings.getSafeSettings(),
+            needsRestart: true
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * اختبار اتصال خدمة معينة
+ */
+app.post('/api/settings/test/:service', async (req: Request, res: Response) => {
+    try {
+        const settings = getSettingsManager();
+        const { service } = req.params;
+
+        let result;
+        switch (service) {
+            case 'manus':
+                result = await settings.testManus();
+                break;
+            case 'openai':
+                result = await settings.testOpenAI();
+                break;
+            case 'google':
+                result = await settings.testGoogle();
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    error: 'خدمة غير معروفة'
+                });
+        }
+
+        res.json({
+            success: true,
+            result
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * اختبار جميع الاتصالات
+ */
+app.get('/api/settings/test', async (req: Request, res: Response) => {
+    try {
+        const settings = getSettingsManager();
+        const results = await settings.testAllConnections();
+
+        res.json({
+            success: true,
+            results
+        });
     } catch (error: any) {
         res.status(500).json({
             success: false,

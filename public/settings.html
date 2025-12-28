@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ الإعدادات - وكيلك الشخصي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Settings Card */
+        .settings-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .settings-card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-card h2 .icon {
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: #666;
+        }
+
+        .form-group .hint {
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .form-group .hint a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .form-group .hint a:hover {
+            text-decoration: underline;
+        }
+
+        /* Input with button */
+        .input-with-btn {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-with-btn input {
+            flex: 1;
+        }
+
+        .test-btn {
+            padding: 12px 20px;
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid #667eea;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .test-btn:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .test-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .test-btn.success {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4caf50;
+        }
+
+        .test-btn.error {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: #f44336;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+
+        .status-badge.connected {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-badge.disconnected {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .status-badge.pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Save Button */
+        .save-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .save-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .save-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .restart-notice {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            color: #ffc107;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .restart-notice.show {
+            display: block;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 15px 30px;
+            background: #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .input-with-btn {
+                flex-direction: column;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .save-section {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚙️ إعدادات النظام</h1>
+            <a href="/" class="back-btn">← العودة للمحادثة</a>
+        </div>
+
+        <!-- Manus MCP Settings -->
+        <div class="settings-card">
+            <h2>
+                <span class="icon">⚡</span>
+                Manus MCP Server
+                <span class="status-badge disconnected" id="manus-status">
+                    <span class="status-dot"></span>
+                    <span>غير متصل</span>
+                </span>
+            </h2>
+            
+            <div class="form-group">
+                <label>عنوان الخادم</label>
+                <input type="text" id="manusServerUrl" placeholder="http://localhost:3000">
+                <p class="hint">عنوان خادم MCP المحلي</p>
+            </div>
+
+            <div class="form-group">
+                <label>مفتاح API</label>
+                <div class="input-with-btn">
+                    <input type="password" id="manusApiKey" placeholder="manus-local-xxx">
+                    <button class="test-btn" onclick="testConnection('manus')">اختبار</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- OpenAI Settings -->
+        <div class="settings-card">
+            <h2>
+                <span class="icon">🤖</span>
+                OpenAI API
+                <span class="status-badge disconnected" id="openai-status">
+                    <span class="status-dot"></span>
+                    <span>غير مُعد</span>
+                </span>
+            </h2>
+            
+            <div class="form-group">
+                <label>مفتاح API</label>
+                <div class="input-with-btn">
+                    <input type="password" id="openaiApiKey" placeholder="sk-...">
+                    <button class="test-btn" onclick="testConnection('openai')">اختبار</button>
+                </div>
+                <p class="hint">احصل على مفتاح من <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></p>
+            </div>
+
+            <div class="form-group">
+                <label>النموذج</label>
+                <input type="text" id="openaiModel" placeholder="gpt-4.1-mini">
+            </div>
+        </div>
+
+        <!-- Google AI Settings -->
+        <div class="settings-card">
+            <h2>
+                <span class="icon">🔍</span>
+                Google AI (Gemini)
+                <span class="status-badge disconnected" id="google-status">
+                    <span class="status-dot"></span>
+                    <span>غير مُعد</span>
+                </span>
+            </h2>
+            
+            <div class="form-group">
+                <label>مفتاح API</label>
+                <div class="input-with-btn">
+                    <input type="password" id="googleApiKey" placeholder="AIza...">
+                    <button class="test-btn" onclick="testConnection('google')">اختبار</button>
+                </div>
+                <p class="hint">احصل على مفتاح من <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
+            </div>
+
+            <div class="form-group">
+                <label>النموذج</label>
+                <input type="text" id="googleModel" placeholder="gemini-pro">
+            </div>
+        </div>
+
+        <!-- Cursor Settings -->
+        <div class="settings-card">
+            <h2>
+                <span class="icon">💻</span>
+                Cursor AI
+                <span class="status-badge disconnected" id="cursor-status">
+                    <span class="status-dot"></span>
+                    <span>غير مُعد</span>
+                </span>
+            </h2>
+            
+            <div class="form-group">
+                <label>مسار البرنامج</label>
+                <input type="text" id="cursorPath" placeholder="C:\Users\...\Cursor.exe">
+                <p class="hint">مسار ملف Cursor.exe على جهازك. حمّل من <a href="https://cursor.sh" target="_blank">cursor.sh</a></p>
+            </div>
+        </div>
+
+        <!-- User Settings -->
+        <div class="settings-card">
+            <h2>
+                <span class="icon">👤</span>
+                إعدادات المستخدم
+            </h2>
+            
+            <div class="form-group">
+                <label>اسم المستخدم</label>
+                <input type="text" id="userName" placeholder="اسمك">
+            </div>
+        </div>
+
+        <!-- Save Section -->
+        <div class="save-section">
+            <div class="restart-notice" id="restart-notice">
+                ⚠️ يجب إعادة تشغيل الخادم لتطبيق التغييرات
+            </div>
+            <button class="save-btn" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_URL = window.location.origin;
+
+        // تحميل الإعدادات عند فتح الصفحة
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_URL}/api/settings`);
+                const data = await response.json();
+
+                if (data.success && data.settings) {
+                    const s = data.settings;
+                    
+                    // ملء الحقول
+                    document.getElementById('manusServerUrl').value = s.manusServerUrl || '';
+                    document.getElementById('manusApiKey').value = '';
+                    document.getElementById('manusApiKey').placeholder = s.manusApiKey || 'manus-local-xxx';
+                    
+                    document.getElementById('openaiApiKey').value = '';
+                    document.getElementById('openaiApiKey').placeholder = s.openaiApiKey || 'sk-...';
+                    document.getElementById('openaiModel').value = s.openaiModel || '';
+                    
+                    document.getElementById('googleApiKey').value = '';
+                    document.getElementById('googleApiKey').placeholder = s.googleApiKey || 'AIza...';
+                    document.getElementById('googleModel').value = s.googleModel || '';
+                    
+                    document.getElementById('cursorPath').value = s.cursorPath || '';
+                    document.getElementById('userName').value = s.userName || '';
+
+                    // تحديث حالة الاتصال
+                    updateStatusBadge('manus', s.configured?.manus);
+                    updateStatusBadge('openai', s.configured?.openai);
+                    updateStatusBadge('google', s.configured?.google);
+                    updateStatusBadge('cursor', s.configured?.cursor);
+                }
+            } catch (error) {
+                showToast('فشل تحميل الإعدادات', 'error');
+            }
+        }
+
+        // حفظ الإعدادات
+        async function saveSettings() {
+            const btn = document.querySelector('.save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+
+            try {
+                const settings = {
+                    manusServerUrl: document.getElementById('manusServerUrl').value,
+                    openaiModel: document.getElementById('openaiModel').value,
+                    googleModel: document.getElementById('googleModel').value,
+                    cursorPath: document.getElementById('cursorPath').value,
+                    userName: document.getElementById('userName').value
+                };
+
+                // إضافة المفاتيح فقط إذا تم إدخالها
+                const manusKey = document.getElementById('manusApiKey').value;
+                if (manusKey) settings.manusApiKey = manusKey;
+
+                const openaiKey = document.getElementById('openaiApiKey').value;
+                if (openaiKey) settings.openaiApiKey = openaiKey;
+
+                const googleKey = document.getElementById('googleApiKey').value;
+                if (googleKey) settings.googleApiKey = googleKey;
+
+                const response = await fetch(`${API_URL}/api/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ تم حفظ الإعدادات بنجاح', 'success');
+                    
+                    if (data.needsRestart) {
+                        document.getElementById('restart-notice').classList.add('show');
+                    }
+
+                    // إعادة تحميل الإعدادات
+                    loadSettings();
+                } else {
+                    showToast('❌ ' + (data.error || 'فشل الحفظ'), 'error');
+                }
+            } catch (error) {
+                showToast('❌ خطأ في الاتصال', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💾 حفظ الإعدادات';
+            }
+        }
+
+        // اختبار الاتصال
+        async function testConnection(service) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span>';
+            btn.className = 'test-btn';
+
+            try {
+                // إرسال المفتاح الجديد إذا تم إدخاله
+                const keyInput = document.getElementById(service + 'ApiKey');
+                if (keyInput && keyInput.value) {
+                    const settings = {};
+                    settings[service + 'ApiKey'] = keyInput.value;
+                    
+                    // حفظ مؤقت للاختبار
+                    await fetch(`${API_URL}/api/settings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(settings)
+                    });
+                }
+
+                const response = await fetch(`${API_URL}/api/settings/test/${service}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.result) {
+                    if (data.result.connected) {
+                        btn.className = 'test-btn success';
+                        btn.textContent = '✓ متصل';
+                        updateStatusBadge(service, true);
+                        showToast(`✅ ${data.result.message}`, 'success');
+                    } else {
+                        btn.className = 'test-btn error';
+                        btn.textContent = '✗ فشل';
+                        updateStatusBadge(service, false);
+                        showToast(`❌ ${data.result.message}`, 'error');
+                    }
+                }
+            } catch (error) {
+                btn.className = 'test-btn error';
+                btn.textContent = '✗ خطأ';
+                showToast('❌ خطأ في الاتصال', 'error');
+            }
+
+            // إعادة النص الأصلي بعد 3 ثوانٍ
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                btn.className = 'test-btn';
+            }, 3000);
+        }
+
+        // تحديث شارة الحالة
+        function updateStatusBadge(service, connected) {
+            const badge = document.getElementById(service + '-status');
+            if (badge) {
+                badge.className = `status-badge ${connected ? 'connected' : 'disconnected'}`;
+                badge.querySelector('span:last-child').textContent = connected ? 'متصل' : 'غير متصل';
+            }
+        }
+
+        // إظهار إشعار
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+
+        // تحميل الإعدادات عند فتح الصفحة
+        loadSettings();
+    </script>
+</body>
+</html>
